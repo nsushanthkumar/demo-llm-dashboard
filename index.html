@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Minimal Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -79,7 +80,7 @@
             color: #61dafb;
         }
 
-        #echo-input {
+        #echo-input, #md-input {
             width: calc(100% - 20px);
             padding: 10px;
             margin-bottom: 10px;
@@ -92,19 +93,19 @@
             transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
         }
 
-        body.dark-mode #echo-input {
+        body.dark-mode #echo-input, body.dark-mode #md-input {
             background-color: #4a4f56;
             color: #f0f0f0;
             border-color: #666;
         }
 
-        #echo-input:focus {
+        #echo-input:focus, #md-input:focus {
             outline: none;
             border-color: #007bff;
             box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
         }
 
-        body.dark-mode #echo-input:focus {
+        body.dark-mode #echo-input:focus, body.dark-mode #md-input:focus {
             border-color: #61dafb;
             box-shadow: 0 0 0 2px rgba(97, 218, 251, 0.25);
         }
@@ -128,16 +129,93 @@
             border-color: #666;
         }
 
-        #toggle-theme {
+        #md-input {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        #md-output {
+            padding: 10px;
+            min-height: 50px;
+            border: 1px dashed #e0e0e0;
+            border-radius: 4px;
+            background-color: #fdfdfd;
+            font-size: 0.95em;
+            color: #333;
+            white-space: normal;
+            word-wrap: break-word;
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+
+        body.dark-mode #md-output {
+            background-color: #4a4f56;
+            color: #a0a0a0;
+            border-color: #666;
+        }
+
+        #md-output h1, #md-output h2, #md-output h3, #md-output h4, #md-output h5, #md-output h6 {
+            color: #2c3e50;
+            margin-top: 1em;
+            margin-bottom: 0.5em;
+            line-height: 1.2;
+        }
+        body.dark-mode #md-output h1, body.dark-mode #md-output h2, body.dark-mode #md-output h3, body.dark-mode #md-output h4, body.dark-mode #md-output h5, body.dark-mode #md-output h6 {
+            color: #e0e0e0;
+        }
+        #md-output p {
+            margin-bottom: 1em;
+        }
+        #md-output a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        body.dark-mode #md-output a {
+            color: #61dafb;
+        }
+        #md-output a:hover {
+            text-decoration: underline;
+        }
+        #md-output code {
+            background-color: rgba(0, 0, 0, 0.05);
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+            font-size: 0.9em;
+        }
+        body.dark-mode #md-output code {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #f0f0f0;
+        }
+        #md-output pre {
+            background-color: rgba(0, 0, 0, 0.05);
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin-bottom: 1em;
+        }
+        body.dark-mode #md-output pre {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #f0f0f0;
+        }
+        #md-output pre code {
+            background-color: transparent;
+            padding: 0;
+            border-radius: 0;
+            font-size: 1em;
+        }
+
+        #toggle-theme, #format-toggle {
             padding: 10px 20px;
             font-size: 1em;
-            background-color: #007bff;
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             transition: background-color 0.3s ease, transform 0.2s ease;
-            align-self: flex-end;
+        }
+
+        #toggle-theme {
+            background-color: #007bff;
         }
 
         #toggle-theme:hover {
@@ -157,6 +235,43 @@
         body.dark-mode #toggle-theme:hover {
             background-color: #21a1f1;
         }
+
+        #format-toggle {
+            background-color: #28a745;
+            margin-top: 15px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        #format-toggle:hover {
+            background-color: #218838;
+            transform: translateY(-1px);
+        }
+
+        #format-toggle:active {
+            transform: translateY(0);
+        }
+
+        body.dark-mode #format-toggle {
+            background-color: #20c997;
+            color: #282c34;
+        }
+
+        body.dark-mode #format-toggle:hover {
+            background-color: #17a2b8;
+        }
+
+        #theme-status {
+            font-weight: bold;
+            font-size: 0.9em;
+            color: #555;
+            transition: color 0.3s ease;
+        }
+
+        body.dark-mode #theme-status {
+            color: #b0b0b0;
+        }
     </style>
 </head>
 <body>
@@ -165,6 +280,7 @@
     <div class="container">
         <h2>Live Clock</h2>
         <div id="clock"></div>
+        <button id="format-toggle">Toggle 24-Hour Format</button>
     </div>
 
     <div class="container">
@@ -173,62 +289,108 @@
         <div id="echo-output"></div>
     </div>
 
-    <div class="container" style="display: flex; justify-content: flex-end;">
+    <div class="container">
+        <h2>Markdown Preview</h2>
+        <textarea id="md-input" rows="6" placeholder="Type Markdown here..."></textarea>
+        <div id="md-output"></div>
+    </div>
+
+    <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
+        <span id="theme-status"></span>
         <button id="toggle-theme">Toggle Dark Mode</button>
     </div>
 
     <script>
-        // 1. Live-updating clock
+        // 1. Live-updating clock and 12/24-hour format toggle
         const clockElement = document.getElementById('clock');
+        const formatToggleButton = document.getElementById('format-toggle');
+        const CLOCK_FORMAT_KEY = 'clockFormat';
+        let is24HourFormat = localStorage.getItem(CLOCK_FORMAT_KEY) === '24';
+
+        function updateFormatToggleButtonText() {
+            formatToggleButton.textContent = is24HourFormat ? 'Toggle 12-Hour Format' : 'Toggle 24-Hour Format';
+        }
 
         function updateClock() {
             const now = new Date();
-            const options = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+            const options = {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: !is24HourFormat
+            };
             clockElement.textContent = now.toLocaleTimeString('en-US', options);
         }
 
-        // Update clock immediately and then every second
+        updateFormatToggleButtonText();
         updateClock();
         setInterval(updateClock, 1000);
 
-        // 2. Text input that echoes below
+        formatToggleButton.addEventListener('click', () => {
+            is24HourFormat = !is24HourFormat;
+            localStorage.setItem(CLOCK_FORMAT_KEY, is24HourFormat ? '24' : '12');
+            updateFormatToggleButtonText();
+            updateClock();
+        });
+
+        // 2. Text input that echoes below and URL parameter pre-fill
         const echoInput = document.getElementById('echo-input');
         const echoOutput = document.getElementById('echo-output');
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const greetingParam = urlParams.get('greeting');
+
+        if (greetingParam) {
+            echoInput.value = greetingParam;
+            echoOutput.textContent = greetingParam;
+        }
 
         echoInput.addEventListener('input', () => {
             echoOutput.textContent = echoInput.value;
         });
 
-        // 3. Button that toggles dark mode
+        // 3. Button that toggles dark mode and persists preference, shows theme status
         const toggleThemeButton = document.getElementById('toggle-theme');
         const bodyElement = document.body;
-        const THEME_KEY = 'theme'; // Key for localStorage
+        const THEME_KEY = 'theme';
+        const themeStatusElement = document.getElementById('theme-status');
 
-        // Function to apply theme
         function applyTheme(isDarkMode) {
             if (isDarkMode) {
                 bodyElement.classList.add('dark-mode');
+                themeStatusElement.textContent = 'Current Theme: Dark';
             } else {
                 bodyElement.classList.remove('dark-mode');
+                themeStatusElement.textContent = 'Current Theme: Light';
             }
         }
 
-        // Load theme preference from localStorage on page load
         const savedTheme = localStorage.getItem(THEME_KEY);
         if (savedTheme === 'dark') {
             applyTheme(true);
         } else {
-            // Default to light mode if no preference or 'light'
             applyTheme(false);
         }
 
         toggleThemeButton.addEventListener('click', () => {
             const isDarkMode = bodyElement.classList.contains('dark-mode');
-            applyTheme(!isDarkMode); // Toggle the theme
-
-            // Save preference to localStorage
+            applyTheme(!isDarkMode);
             localStorage.setItem(THEME_KEY, !isDarkMode ? 'dark' : 'light');
         });
+
+        // 4. Simple markdown panel
+        const mdInput = document.getElementById('md-input');
+        const mdOutput = document.getElementById('md-output');
+
+        function renderMarkdown() {
+            mdOutput.innerHTML = marked.parse(mdInput.value);
+        }
+
+        mdInput.addEventListener('input', renderMarkdown);
+
+        if (mdInput.value) {
+            renderMarkdown();
+        }
     </script>
 </body>
 </html>
