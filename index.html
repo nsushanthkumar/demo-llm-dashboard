@@ -383,11 +383,16 @@
         const mdOutput = document.getElementById('md-output');
 
         function renderMarkdown() {
+            // Marked.js (marked.min.js) is used for rendering markdown.
+            // By default, marked.js does not sanitize HTML in the input.
+            // For a simple demo, we'll rely on its default behavior.
+            // For production apps requiring strict HTML sanitization, a library like DOMPurify would be recommended.
             mdOutput.innerHTML = marked.parse(mdInput.value);
         }
 
         mdInput.addEventListener('input', renderMarkdown);
 
+        // Render any initial markdown content if the textarea is pre-filled
         if (mdInput.value) {
             renderMarkdown();
         }
